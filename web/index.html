@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book a Service</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Book a Service</h1>
+      <p class="muted">Pick a service, choose a time, and we'll confirm shortly.</p>
+    </header>
+
+    <!-- Step 1: choose service -->
+    <section id="step-service">
+      <h2>1. Choose a service</h2>
+      <div id="service-list" class="service-list"></div>
+    </section>
+
+    <!-- Step 2: choose date & time -->
+    <section id="step-time" class="hidden">
+      <h2>2. Pick a date &amp; time</h2>
+      <label class="field">
+        <span>Date</span>
+        <input type="date" id="booking-date" required />
+      </label>
+      <label class="field">
+        <span>Time</span>
+        <input type="time" id="booking-time" required />
+      </label>
+    </section>
+
+    <!-- Step 3: your details -->
+    <section id="step-details" class="hidden">
+      <h2>3. Your details</h2>
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="customer-name" required autocomplete="name" />
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" id="customer-email" autocomplete="email" />
+      </label>
+      <label class="field">
+        <span>Phone</span>
+        <input type="tel" id="customer-phone" autocomplete="tel" />
+      </label>
+    </section>
+
+    <div class="actions" id="actions">
+      <button id="btn-prev" class="hidden">Back</button>
+      <button id="btn-next" class="primary">Continue</button>
+      <button id="btn-submit" class="primary hidden">Confirm booking</button>
+    </div>
+
+    <section id="confirmation" class="hidden">
+      <h2>Booking received!</h2>
+      <p class="muted">Reference: <strong id="booking-id"></strong></p>
+      <p class="muted">We'll confirm your <span id="confirm-service"></span> for
+        <span id="confirm-time"></span> shortly.</p>
+      <button id="btn-again" class="primary">Book another</button>
+    </section>
+
+    <div id="error" class="hidden error"></div>
+  </main>
+  <script src="config.js"></script>
+  <script src="vendor/supabase.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

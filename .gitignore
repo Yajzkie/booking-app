@@ -1,0 +1,17 @@
+# secrets — never commit
+server/.env
+
+# deps / builds
+node_modules/
+client/dist/
+server/node_modules/
+
+# flutter artifacts
+owner_app/.dart_tool/
+owner_app/build/
+owner_app/.flutter-plugins*
+owner_app/ios/Pods/
+
+# misc
+.DS_Store
+*.log
