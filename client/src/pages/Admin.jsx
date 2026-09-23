@@ -4,7 +4,7 @@ import { fmtDate, fmtTime } from "./Dashboard.jsx";
 
 export default function Admin({ navigate }) {
   const [tab, setTab] = useState("bookings");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [filter, setFilter] = useState("all");
   const [bookings, setBookings] = useState(null);
   const [services, setServices] = useState(null);
   const [error, setError] = useState("");
