@@ -53,6 +53,7 @@ export function AuthProvider({ children }) {
     if (!loggedIn) {
       setNotice("Account created! Check your email to confirm, then sign in.");
     }
+    return data.role;
   }
 
   async function login(email, password) {
@@ -62,6 +63,7 @@ export function AuthProvider({ children }) {
     });
     if (data.error) throw new Error(data.error);
     applySession(data);
+    return data.role;
   }
 
   function logout() {

@@ -40,9 +40,14 @@ export default function App() {
         </div>
 
         <nav className="sidebar-nav" aria-label="Main">
-          {navItem("/dashboard", "Dashboard")}
-          {navItem("/", "Book a visit")}
-          {isAdmin && navItem("/admin", "Admin")}
+          {isAdmin ? (
+            navItem("/admin", "Admin")
+          ) : (
+            <>
+              {navItem("/dashboard", "Dashboard")}
+              {navItem("/", "Book a visit")}
+            </>
+          )}
         </nav>
 
         <div className="sidebar-foot">
@@ -52,9 +57,14 @@ export default function App() {
       </aside>
 
       <main className="content">
-        {route === "/" && <Book navigate={navigate} />}
-        {route === "/dashboard" && <Dashboard navigate={navigate} />}
-        {route === "/admin" && isAdmin && <Admin navigate={navigate} />}
+        {isAdmin ? (
+          <Admin navigate={navigate} />
+        ) : (
+          <>
+            {route === "/" && <Book navigate={navigate} />}
+            {route === "/dashboard" && <Dashboard navigate={navigate} />}
+          </>
+        )}
       </main>
     </div>
   );

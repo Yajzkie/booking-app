@@ -18,8 +18,8 @@ export default function Auth({ navigate }) {
           <h1 className="auth-title">{user.email}</h1>
           <p className="auth-sub">Access your dashboard to see what's confirmed and what's coming up.</p>
           <div className="actions">
-            <button className="primary" onClick={() => navigate("/dashboard")}>
-              Go to dashboard
+            <button className="primary" onClick={() => navigate(user.role === "owner" ? "/admin" : "/dashboard")}>
+              {user.role === "owner" ? "Go to admin" : "Go to dashboard"}
             </button>
             <button onClick={() => logout()}>Sign out</button>
           </div>
@@ -32,11 +32,11 @@ export default function Auth({ navigate }) {
     e.preventDefault();
     setError("");
     setBusy(true);
-    try {
-      if (mode === "signup") await signUp(email, password, name);
-      else await login(email, password);
-      navigate("/dashboard");
-    } catch (err) {
+try {
+        const role =
+          mode === "signup" ? await signUp(email, password, name) : await login(email, password);
+        navigate(role === "owner" ? "/admin" : "/dashboard");
+      } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);

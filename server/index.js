@@ -30,10 +30,23 @@ function tokenOf(req) {
 
 // The role the user's JWT sees in their own profile. Renters default to
 // "client"; the owner is promoted manually (step 8 of client-accounts.sql).
+// Pin to the caller's profile row: owners can read *all* profiles under RLS,
+// so without the filter .maybeSingle() sees many rows and errors out.
+function tokenSub(token) {
+  try {
+    return JSON.parse(Buffer.from(token.split(".")[1], "base64url")).sub;
+  } catch {
+    return null;
+  }
+}
+
 async function roleOf(token) {
+  const sub = tokenSub(token);
+  if (!sub) return "client";
   const { data } = await withToken(token)
     .from("profiles")
     .select("role")
+    .eq("id", sub)
     .maybeSingle();
   return data?.role || "client";
 }
