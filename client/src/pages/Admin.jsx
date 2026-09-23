@@ -115,6 +115,8 @@ export default function Admin({ navigate }) {
   ];
   const filteredBookings =
     filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
+  const confirmedBookings = bookingFiltered(filter === "all" ? [...bookings] : [...filteredBookings], "confirmed")
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   async function confirmBooking() {
     if (!confirming) return;
