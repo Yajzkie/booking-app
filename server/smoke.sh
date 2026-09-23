@@ -20,6 +20,8 @@ check "health" "http://localhost:3001/api/health" GET
 check "services" "http://localhost:3001/api/services" GET
 check "unauth-mine-401" "http://localhost:3001/api/bookings/mine" GET
 check "book-missing-fields-400" "http://localhost:3001/api/bookings" POST
+check "admin-bookings-401" "http://localhost:3001/api/admin/bookings" GET
+check "admin-services-401" "http://localhost:3001/api/admin/services" GET
 
 EMAIL="demo$(date +%s)@example.com"
 echo "== signup =="
@@ -51,3 +53,9 @@ curl -s --max-time 5 -X POST -H "Content-Type: application/json" \
 echo "== my bookings =="
 curl -s --max-time 5 -H "Authorization: Bearer $TOKEN" \
   http://localhost:3001/api/bookings/mine; echo
+
+if [ "$(echo "$LOGIN" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{console.log(JSON.parse(d).role||"")}catch(e){console.log("")}})')" != "owner" ]; then
+  echo "== admin-denied-for-client-403 =="
+  curl -s --max-time 5 -H "Authorization: Bearer $TOKEN" \
+    http://localhost:3001/api/admin/bookings; echo
+fi

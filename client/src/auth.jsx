@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { api, storage } from "./api.js";
 
 const AuthContext = createContext(null);
@@ -11,18 +11,34 @@ export function AuthProvider({ children }) {
 
   const [notice, setNotice] = useState("");
 
-  function applySession({ session, user }) {
+  // On load, refresh the stored role (an owner session saved before this
+  // shipped won't have "role" yet). Best-effort: ignore failures.
+  useEffect(() => {
+    const token = storage.token;
+    if (!token) return;
+    api("/api/auth/me", { token })
+      .then((data) => {
+        setUser((prev) => {
+          if (!prev || !data.role) return prev;
+          const next = { ...prev, role: data.role };
+          localStorage.setItem("sb_user", JSON.stringify(next));
+          return next;
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  function applySession({ session, user, role }) {
     if (session) {
       storage.token = session.access_token;
-      setUser(user);
-      localStorage.setItem(
-        "sb_user",
-        JSON.stringify({
-          id: user.id,
-          email: user.email,
-          name: user.user_metadata?.full_name || user.user_metadata?.name || "",
-        })
-      );
+      const shaped = {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+        role: role || "client",
+      };
+      setUser(shaped);
+      localStorage.setItem("sb_user", JSON.stringify(shaped));
     }
     return session;
   }

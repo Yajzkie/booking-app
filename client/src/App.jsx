@@ -2,6 +2,7 @@ import { useState } from "react";
 import Book from "./pages/Book.jsx";
 import Auth from "./pages/Auth.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Admin from "./pages/Admin.jsx";
 import { useAuth } from "./auth.jsx";
 
 export default function App() {
@@ -16,6 +17,8 @@ export default function App() {
       </main>
     );
   }
+
+  const isAdmin = user.role === "owner";
 
   const navItem = (href, label) => (
     <button
@@ -39,6 +42,7 @@ export default function App() {
         <nav className="sidebar-nav" aria-label="Main">
           {navItem("/dashboard", "Dashboard")}
           {navItem("/", "Book a visit")}
+          {isAdmin && navItem("/admin", "Admin")}
         </nav>
 
         <div className="sidebar-foot">
@@ -50,6 +54,7 @@ export default function App() {
       <main className="content">
         {route === "/" && <Book navigate={navigate} />}
         {route === "/dashboard" && <Dashboard navigate={navigate} />}
+        {route === "/admin" && isAdmin && <Admin navigate={navigate} />}
       </main>
     </div>
   );

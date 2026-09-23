@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api, storage } from "../api.js";
 import { useAuth } from "../auth.jsx";
 
-function fmtDate(b) {
+export function fmtDate(b) {
   return new Date(`${b.date}T${b.time}`).toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
@@ -10,7 +10,7 @@ function fmtDate(b) {
   });
 }
 
-function fmtTime(b) {
+export function fmtTime(b) {
   return new Date(`${b.date}T${b.time}`).toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
