@@ -4,10 +4,12 @@ import { fmtDate, fmtTime } from "./Dashboard.jsx";
 
 export default function Admin({ navigate }) {
   const [tab, setTab] = useState("bookings");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [bookings, setBookings] = useState(null);
   const [services, setServices] = useState(null);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
+  const [confirming, setConfirming] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const auth = storage.token ? { token: storage.token } : {};
@@ -111,6 +113,23 @@ export default function Admin({ navigate }) {
     { key: "pending", label: "Pending", value: counts.pending || 0 },
     { key: "confirmed", label: "Confirmed", value: counts.confirmed || 0 },
   ];
+  const filteredBookings =
+    filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
+
+  async function confirmBooking() {
+    if (!confirming) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/api/admin/bookings/${confirming.id}`, { method: "PATCH", ...auth, body: { status: "confirmed" } });
+      setConfirming(null);
+      await reloadBookings();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const bookingRow = (b) => (
     <li key={b.id} className={`booking-row status-${b.status}`}>
@@ -176,29 +195,67 @@ export default function Admin({ navigate }) {
         >
           Services
         </button>
+        <button
+          className={tab === "schedule" ? "active" : ""}
+          aria-pressed={tab === "schedule"}
+          onClick={() => setTab("schedule")}
+        >
+          Schedule
+        </button>
       </div>
 
       {tab === "bookings" && (
         <>
           <div className="stat-row">
             {stats.map((s) => (
-              <div key={s.key} className="stat">
+              <button
+                key={s.key}
+                className={`stat ${filter === s.key ? "active" : ""}`}
+                aria-pressed={filter === s.key}
+                disabled={busy}
+                onClick={() => setFilter(s.key)}
+              >
                 <strong>{s.value}</strong>
                 <span>{s.label}</span>
-              </div>
+              </button>
             ))}
           </div>
           <section className="card">
             <div className="section-head">
-              <h2>All bookings</h2>
+              <h2>
+                All bookings
+                {filter !== "all" && (
+                  <span className="filter-hint"> — {filter}</span>
+                )}
+              </h2>
             </div>
-            {bookings.length === 0 ? (
-              <p className="muted">No bookings yet.</p>
+            {filteredBookings.length === 0 ? (
+              <p className="muted">
+                {filter === "all"
+                  ? "No bookings yet."
+                  : `No ${filter} bookings right now.`}
+              </p>
             ) : (
-              <ul className="booking-list">{bookings.map(bookingRow)}</ul>
+              <ul className="booking-list">{filteredBookings.map(bookingRow)}</ul>
             )}
           </section>
         </>
+      )}
+
+      {tab === "schedule" && (
+        <section className="card">
+          <div className="section-head">
+            <h2>Confirmed schedule</h2>
+            <p className="muted">
+              Every confirmed booking, in date &amp; time order — your working day at a glance.
+            </p>
+          </div>
+          {confirmedBookings.length === 0 ? (
+            <p className="muted">No confirmed bookings yet — confirm one from the Bookings tab.</p>
+          ) : (
+            <ul className="booking-list">{confirmedBookings.map(bookingRow)}</ul>
+          )}
+        </section>
       )}
 
       {tab === "services" && (
