@@ -17,6 +17,10 @@ export function fmtTime(b) {
   });
 }
 
+export function fmtPrice(p) {
+  return p == null || p === 0 ? "Free" : `₱${Number(p).toLocaleString("en-PH")}`;
+}
+
 export default function Dashboard({ navigate }) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState(null);

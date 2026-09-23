@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, storage } from "../api.js";
-import { fmtDate, fmtTime } from "./Dashboard.jsx";
+import { fmtDate, fmtTime, fmtPrice } from "./Dashboard.jsx";
 
 export default function Admin({ navigate }) {
   const [tab, setTab] = useState("bookings");
@@ -292,7 +292,7 @@ export default function Admin({ navigate }) {
                 </label>
                 <div className="form-row">
                   <label>
-                    Price ($)
+                    Price (₱)
                     <input
                       type="number"
                       min="0"
@@ -333,7 +333,7 @@ export default function Admin({ navigate }) {
                       {s.description && <div className="muted">{s.description}</div>}
                     </div>
                     <div className="service-side">
-                      <span className="price">{s.price ? `$${s.price}` : "Free"} · {s.duration_minutes} min</span>
+                      <span className="price">{fmtPrice(s.price)} · {s.duration_minutes} min</span>
                       <div className="row-actions">
                         <button onClick={() => setEditing({ ...s, price: String(s.price), duration_minutes: String(s.duration_minutes) })}>
                           Edit

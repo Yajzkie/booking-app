@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, storage } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import { fmtPrice } from "./Dashboard.jsx";
 
 export default function Book({ navigate }) {
   const { user } = useAuth();
@@ -116,7 +117,7 @@ export default function Book({ navigate }) {
                 <strong>{s.name}</strong>
                 {s.description && <div className="muted">{s.description}</div>}
               </div>
-              <div className="price">{s.price ? `$${s.price}` : "Free"}</div>
+              <div className="price">{fmtPrice(s.price)}</div>
             </div>
           ))}
         </div>
@@ -152,7 +153,7 @@ export default function Book({ navigate }) {
             <span className="summary-label">Service</span>
             <span className="summary-value">
               {service.name}
-              {service.price ? ` · $${service.price}` : ""}
+              {service.price ? ` · ${fmtPrice(service.price)}` : ""}
             </span>
             <button className="summary-edit" onClick={() => setStep(0)}>
               Edit
