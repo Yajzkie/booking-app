@@ -109,10 +109,35 @@ app.post("/api/auth/signup", async (req, res) => {
   });
 });
 
+// --- brute-force guard (in-memory, per-process; ok for this scale) ---
+// Tracks failed attempts per email in a sliding window; rate-limit code
+// should move to Redis/DB if this ever runs on multiple instances.
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_FAILS = 5;
+const loginFails = new Map(); // email -> [timestampMs, ...]
+
+function allowLogin(email) {
+  const key = String(email).toLowerCase();
+  const now = Date.now();
+  const recent = (loginFails.get(key) || []).filter((t) => now - t < LOGIN_WINDOW_MS);
+  if (recent.length >= LOGIN_MAX_FAILS) {
+    const wait = Math.ceil((LOGIN_WINDOW_MS - (now - recent[0])) / 1000 / 60);
+    return { ok: false, wait };
+  }
+  return { ok: true, recent };
+}
+
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
+  const gate = allowLogin(email);
+  if (!gate.ok)
+    return res.status(429).json({ error: `Too many attempts. Try again in ~${gate.wait} min.` });
   const { data, error } = await anon.auth.signInWithPassword({ email, password });
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) {
+    loginFails.set(String(email).toLowerCase(), [...gate.recent, Date.now()]);
+    return res.status(400).json({ error: error.message });
+  }
+  loginFails.delete(String(email).toLowerCase());
   res.json({
     session: data.session,
     user: data.user,
