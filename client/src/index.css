@@ -1059,3 +1059,65 @@ button.cal-day.selected {
 .cal-dot.plain {
   border: 1px solid var(--border);
 }
+
+/* ---- narrow phones (340-420px): tighten the calendar so the 7-column
+   grid and month stepper stay usable instead of squishing ---- */
+@media (max-width: 420px) {
+  .card {
+    padding: 1rem 0.75rem;
+  }
+
+  .cal-head {
+    margin: 0.5rem 0 0.4rem;
+  }
+
+  .cal-head button {
+    padding: 0.35rem 0.6rem;
+    font-size: 1rem;
+    min-height: 40px;
+  }
+
+  .cal-title {
+    font-size: 0.9rem;
+  }
+
+  .cal-weekdays,
+  .cal-grid {
+    gap: 0.15rem;
+  }
+
+  .cal-weekdays {
+    font-size: 0.7rem;
+  }
+
+  .cal-day {
+    padding: 0.3rem 0;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  .cal-day-sessions {
+    gap: 0.1rem;
+  }
+
+  .cal-sess {
+    font-size: 0.48rem;
+    padding: 0.12rem 0.15rem;
+  }
+
+  .cal-legend {
+    font-size: 0.72rem;
+    flex-wrap: wrap;
+    row-gap: 0.15rem;
+  }
+
+  .stepper {
+    gap: 0.5rem;
+  }
+
+  .step-label {
+    font-size: 0.7rem;
+  }
+}
