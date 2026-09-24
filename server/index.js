@@ -182,10 +182,16 @@ function hmToMinutes(hm) {
 }
 
 async function sessionAvailability(firstDay, lastDay) {
+  // Fresh client per call: the long-lived module-level `anon` holds a stale
+  // PostgREST schema/policy cache and intermittently returns a filtered subset
+  // of rows (calendar flips between correct and wrong without data changing).
+  const reader = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    auth: { persistSession: false },
+  });
   const [{ data: settings, error: settingsError }, { data: rows, error: takenError }] =
     await Promise.all([
-      anon.from("settings").select("*").eq("id", 1).single(),
-      anon
+      reader.from("settings").select("*").eq("id", 1).single(),
+      reader
         .from("bookings")
         .select("date, session")
         .gte("date", firstDay)
