@@ -54,7 +54,7 @@ export default function Book({ navigate }) {
   }, [loadSessions]);
 
   // While the calendar is on screen, keep it in sync with other clients:
-  // refresh when they come back to the tab, and poll every 20s as a fallback.
+  // refresh when they come back to the tab, and poll every 5s as a fallback.
   const onCalendar = step === 1;
   useEffect(() => {
     if (!onCalendar) return;
@@ -62,7 +62,7 @@ export default function Book({ navigate }) {
     const onFocus = () => loadSessions();
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
-    const tick = setInterval(loadSessions, 20000);
+    const tick = setInterval(loadSessions, 5000);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);

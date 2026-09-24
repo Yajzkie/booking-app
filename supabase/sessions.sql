@@ -138,7 +138,11 @@ grant execute on function public.create_booking to anon, authenticated;
 
 -- /api/sessions reads availability as anon (server/index.js). Without an anon
 -- SELECT policy, RLS hides every booking row and the calendar shows nothing
--- taken. Grant only the bare columns availability needs -- never customer data.
+-- taken. Revoke the broad table-level grant schema.sql left behind -- it made
+-- every column (customer name, email, phone) readable by anyone with the anon
+-- key -- then grant only the columns availability needs. Booking writes go
+-- through create_booking (SECURITY DEFINER), so anon needs no INSERT here.
+revoke select, insert on public.bookings from anon;
 grant select (date, session, status) on public.bookings to anon;
 drop policy if exists "public view availability" on public.bookings;
 create policy "public view availability" on public.bookings

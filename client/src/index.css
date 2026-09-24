@@ -987,26 +987,43 @@ fieldset fieldset legend {
   opacity: 0.4;
 }
 
-.cal-day.full {
-  color: var(--danger);
+button.cal-day.full {
+  color: #fff;
   border-color: var(--danger);
-  background: rgba(245, 54, 92, 0.08);
+  background: var(--danger);
   font-weight: 600;
 }
 
-.cal-day.partial {
-  color: var(--warn);
-  border-color: var(--warn);
-  background: rgba(255, 204, 0, 0.14);
+button.cal-day.full .cal-sess:not(.taken) {
+  color: var(--danger);
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.cal-day.open {
+button.cal-day.full:hover:not(:disabled) {
+  background: #d92b4e;
+}
+
+button.cal-day.partial {
+  color: #7a5b00;
+  border-color: var(--warn);
+  background: rgba(255, 204, 0, 0.22);
+}
+
+button.cal-day.partial:hover:not(:disabled) {
+  background: rgba(255, 204, 0, 0.28);
+}
+
+button.cal-day.open {
   color: var(--ok);
   border-color: var(--ok);
-  background: rgba(48, 209, 88, 0.1);
+  background: rgba(48, 209, 88, 0.22);
 }
 
-.cal-day.selected {
+button.cal-day.open:hover:not(:disabled) {
+  background: rgba(48, 209, 88, 0.28);
+}
+
+button.cal-day.selected {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
