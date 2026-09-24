@@ -63,31 +63,11 @@ create policy "update own profile" on public.profiles
   using (id = auth.uid())
   with check (id = auth.uid());
 
--- 7. create_booking now records which account booked (when logged in)
-create or replace function public.create_booking(
-  p_service_id bigint,
-  p_date date,
-  p_time time,
-  p_name text,
-  p_email text default null,
-  p_phone text default null
-) returns bigint
-language plpgsql
-security definer set search_path = public
-as $$
-declare new_id bigint;
-begin
-  insert into public.bookings
-    (service_id, date, time, customer_name, customer_email, customer_phone, customer_id)
-  values
-    (p_service_id, p_date, p_time, p_name, p_email, p_phone, auth.uid())
-  returning id into new_id;
-
-  return new_id;
-end;
-$$;
-
-grant execute on function public.create_booking to anon, authenticated;
+-- 7. create_booking now records which account booked (when logged in).
+--    The authoritative version lives in sessions.sql (stamps time from the
+--    owner's window settings, rejects double-bookings). It runs after this
+--    file per README and its INSERT already includes customer_id = auth.uid(),
+--    so no defintion is duplicated here.
 
 -- 8. Promote your owner account (edit the email first!):
 update public.profiles

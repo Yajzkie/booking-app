@@ -19,17 +19,18 @@
       <div id="service-list" class="service-list"></div>
     </section>
 
-    <!-- Step 2: choose date & time -->
+    <!-- Step 2: choose date & session -->
     <section id="step-time" class="hidden">
-      <h2>2. Pick a date &amp; time</h2>
+      <h2>2. Pick a date &amp; session</h2>
       <label class="field">
         <span>Date</span>
         <input type="date" id="booking-date" required />
       </label>
-      <label class="field">
-        <span>Time</span>
-        <input type="time" id="booking-time" required />
-      </label>
+      <fieldset class="field" id="booking-session">
+        <span>Session</span>
+        <label><input type="radio" name="session" value="morning" required /> Morning</label>
+        <label><input type="radio" name="session" value="afternoon" required /> Afternoon</label>
+      </fieldset>
     </section>
 
     <!-- Step 3: your details -->

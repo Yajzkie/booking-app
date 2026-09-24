@@ -18,7 +18,8 @@ owner_app/                     Flutter admin app
 
 1. Create a project at supabase.com.
 2. Open **SQL Editor** and run `supabase/schema.sql` (fresh) — or for this
-   existing project, run `supabase/client-accounts.sql`.
+   existing project, run `supabase/client-accounts.sql`. Then run
+   `supabase/sessions.sql` (morning/afternoon sessions + double-booking guard).
    **Edit the owner email in step 8 first** — it promotes your account.
 3. Create the owner account (email + password) in **Authentication → Users**.
 4. Note the URL + anon key under **Project Settings → API**.
@@ -49,9 +50,11 @@ turn it off: **Authentication → Sign In / Providers → Email** → disable
 
 ## What's deliberately simple (demo scope)
 
-- Clients log in, but a booking is still name/email/phone + slot.
-- No double-booking protection: two clients can claim the same slot,
-  last write wins.
+- Clients log in, but a booking is still name/email/phone + date/session.
+- A day has two claimable sessions — morning and afternoon — set by the owner
+  in the Hours tab. The site marks a day red when *both* sessions are taken,
+  and the DB rejects a second claim on one (`bookings_one_per_session`
+  partial unique index) even when two clients race.
 - No notifications/push — the owner's Flutter app shows bookings in realtime.
 - Clients can view booking status but not cancel yet.
 

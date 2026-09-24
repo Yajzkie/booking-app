@@ -169,17 +169,90 @@ app.get("/api/services", async (_req, res, next) => {
   }
 });
 
+// ---------- sessions ----------
+// A day has two claimable sessions: morning and afternoon. This endpoint
+// returns, for every day of the requested month, which sessions are still
+// free (and not already past). The client renders a calendar that goes red
+// when both sessions are taken.
+const SESSIONS = ["morning", "afternoon"];
+
+function hmToMinutes(hm) {
+  const [h, m] = hm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+async function sessionAvailability(firstDay, lastDay) {
+  const [{ data: settings, error: settingsError }, { data: rows, error: takenError }] =
+    await Promise.all([
+      anon.from("settings").select("*").eq("id", 1).single(),
+      anon
+        .from("bookings")
+        .select("date, session")
+        .gte("date", firstDay)
+        .lte("date", lastDay)
+        .in("status", ["pending", "confirmed"]),
+    ]);
+  if (settingsError) throw settingsError;
+  if (takenError) throw takenError;
+
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const hm = (t) => t.split(":").slice(0, 2).map(Number);
+  const windowEnd = {
+    morning: hm(settings.morning_end),
+    afternoon: hm(settings.afternoon_end),
+  };
+  const ended = (session, day) => {
+    if (day < today) return true;
+    if (day > today) return false;
+    const [h, m] = windowEnd[session];
+    return nowMinutes >= h * 60 + m;
+  };
+
+  const taken = new Set(rows.map((r) => `${r.date}|${r.session}`));
+  const days = {};
+  let cursor = new Date(`${firstDay}T00:00:00Z`);
+  const last = new Date(`${lastDay}T00:00:00Z`);
+  while (cursor <= last) {
+    const day = cursor.toISOString().slice(0, 10);
+    days[day] = SESSIONS.filter((s) => !taken.has(`${day}|${s}`) && !ended(s, day));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return { days, settings };
+}
+
+app.get("/api/sessions", async (req, res, next) => {
+  try {
+    const { month } = req.query;
+    if (!/^\d{4}-\d{2}$/.test(month || "")) {
+      return res.status(400).json({ error: "month is required (YYYY-MM)" });
+    }
+    res.set("Cache-Control", "no-store");
+    const [y, m] = month.split("-").map(Number);
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const firstDay = `${month}-01`;
+    const lastDay = `${month}-${String(daysInMonth).padStart(2, "0")}`;
+    res.json(await sessionAvailability(firstDay, lastDay));
+  } catch (e) {
+    next(e);
+  }
+});
+
 // ---------- bookings ----------
 app.post("/api/bookings", async (req, res, next) => {
   try {
-    const { service_id, date, time, name, email, phone } = req.body;
-    if (!service_id || !date || !time || !name) {
-      return res.status(400).json({ error: "service_id, date, time and name are required" });
+    const { service_id, date, session, name, email, phone } = req.body;
+    if (!service_id || !date || !session || !name) {
+      return res.status(400).json({ error: "service_id, date, session and name are required" });
+    }
+    if (!SESSIONS.includes(session)) {
+      return res.status(400).json({ error: "session must be morning or afternoon" });
     }
     const { data, error } = await clientFor(req).rpc("create_booking", {
       p_service_id: service_id,
       p_date: date,
-      p_time: time,
+      p_session: session,
       p_name: name,
       p_email: email || null,
       p_phone: phone || null,
@@ -196,8 +269,9 @@ app.get("/api/bookings/mine", async (req, res, next) => {
     if (!tokenOf(req)) return res.status(401).json({ error: "Login required" });
     const { data, error } = await clientFor(req)
       .from("bookings")
-      .select("id, date, time, status, created_at, services(name, duration_minutes)")
-      .order("date", { ascending: false });
+      .select("id, date, session, time, status, created_at, services(name, duration_minutes)")
+      .order("date", { ascending: false })
+      .order("time", { ascending: false });
     if (error) throw error;
     res.json(data);
   } catch (e) {
@@ -211,7 +285,7 @@ app.get("/api/admin/bookings", async (req, res, next) => {
     if (!(await requireOwner(req, res))) return;
     const { data, error } = await clientFor(req)
       .from("bookings")
-      .select("id, customer_name, customer_email, customer_phone, date, time, status, created_at, services(name, duration_minutes)")
+      .select("id, customer_name, customer_email, customer_phone, date, session, time, status, created_at, services(name, duration_minutes)")
       .order("date", { ascending: true })
       .order("time", { ascending: true });
     if (error) throw error;
@@ -308,6 +382,47 @@ app.delete("/api/admin/services/:id", async (req, res, next) => {
     }
     if (!data.length) return res.status(404).json({ error: "Service not found" });
     res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ---------- admin: hours/slot settings ----------
+function isValidTime(t) {
+  return typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+}
+
+function settingsFields(body) {
+  const { morning_start, morning_end, afternoon_start, afternoon_end } = body;
+  if ([morning_start, morning_end, afternoon_start, afternoon_end].some((t) => !isValidTime(t))) {
+    return { error: "Opening hours must be times like 09:00" };
+  }
+  const [ms, me, as_, ae] = [morning_start, morning_end, afternoon_start, afternoon_end].map(hmToMinutes);
+  if (ms >= me || as_ >= ae) return { error: "Each window's start must be before its end" };
+  return {
+    fields: { morning_start, morning_end, afternoon_start, afternoon_end },
+  };
+}
+
+app.get("/api/admin/settings", async (req, res, next) => {
+  try {
+    if (!(await requireOwner(req, res))) return;
+    const { data, error } = await clientFor(req).from("settings").select("*").eq("id", 1).single();
+    if (error) throw error;
+    res.json(data);
+  } catch (e) {
+    next(e);
+  }
+});
+
+app.put("/api/admin/settings", async (req, res, next) => {
+  try {
+    if (!(await requireOwner(req, res))) return;
+    const { fields, error: invalid } = settingsFields(req.body);
+    if (invalid) return res.status(400).json({ error: invalid });
+    const { data, error } = await clientFor(req).from("settings").update(fields).eq("id", 1).select().single();
+    if (error) throw error;
+    res.json(data);
   } catch (e) {
     next(e);
   }

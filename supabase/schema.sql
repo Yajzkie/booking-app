@@ -18,6 +18,8 @@ create table if not exists public.bookings (
   service_id bigint not null references public.services(id),
   date date not null,
   time time not null,
+  session text not null default 'morning'
+    check (session in ('morning', 'afternoon')),
   status text not null default 'pending'
     check (status in ('pending', 'confirmed', 'cancelled')),
   created_at timestamptz not null default now()
@@ -102,30 +104,7 @@ insert into public.services (name, description, price, duration_minutes) values
 on conflict do nothing;
 
 -- ---------- Public booking entry point ----------
--- security definer: runs as owner, deliberately bypasses RLS so anon can
--- create a booking (PostgREST anon INSERT is unreliable in some setups).
--- Only inserts these fixed fields — everything else stays RLS-protected.
-create or replace function public.create_booking(
-  p_service_id bigint,
-  p_date date,
-  p_time time,
-  p_name text,
-  p_email text default null,
-  p_phone text default null
-) returns bigint
-language plpgsql
-security definer set search_path = public
-as $$
-declare new_id bigint;
-begin
-  insert into public.bookings
-    (service_id, date, time, customer_name, customer_email, customer_phone)
-  values
-    (p_service_id, p_date, p_time, p_name, p_email, p_phone)
-  returning id into new_id;
-
-  return new_id;
-end;
-$$;
-
-grant execute on function public.create_booking to anon, authenticated;
+-- create_booking(p_service_id, p_date, p_session, ...) lives in sessions.sql:
+-- it stamps `time` from the owner's window settings and turns a double-booked
+-- (date, session) into a friendly message. Run sessions.sql after this file
+-- (it creates and grants the function).

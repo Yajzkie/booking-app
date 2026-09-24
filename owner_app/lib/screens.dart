@@ -10,7 +10,7 @@ class Booking {
   final String? customerPhone;
   final String serviceName;
   final String date;
-  final String time;
+  final String session;
   final String status;
 
   Booking.fromJson(Map<String, dynamic> j)
@@ -22,8 +22,11 @@ class Booking {
             ? (j['services'] as Map)['name']?.toString() ?? 'Service'
             : 'Service',
         date = (j['date'] ?? '').toString(),
-        time = (j['time'] ?? '').toString(),
+        session = (j['session'] ?? '').toString(),
         status = j['status'] ?? 'pending';
+
+  String get sessionLabel =>
+      session == 'morning' ? 'Morning' : session == 'afternoon' ? 'Afternoon' : session;
 }
 
 class LoginScreen extends StatefulWidget {
@@ -187,7 +190,7 @@ class _BookingsTabState extends State<BookingsTab> {
       final res = await db
           .from('bookings')
           .select('id, customer_name, customer_email, customer_phone, '
-              'date, time, status, services(name)')
+              'date, session, status, services(name)')
           .order('date', ascending: true);
       setState(() {
         _bookings = (res as List)
@@ -195,7 +198,11 @@ class _BookingsTabState extends State<BookingsTab> {
             .toList()
           ..sort((a, b) {
             final c = a.date.compareTo(b.date);
-            return c != 0 ? c : a.time.compareTo(b.time);
+            return c != 0
+                ? c
+                : a.session == 'morning'
+                    ? (b.session == 'morning' ? 0 : 1)
+                    : (b.session == 'afternoon' ? 0 : -1);
           });
         _loading = false;
         _error = null;
@@ -284,7 +291,7 @@ class _BookingCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         title: Text('${booking.customerName} — ${booking.serviceName}'),
-        subtitle: Text('$label at ${booking.time}\n'
+        subtitle: Text('$label — ${booking.sessionLabel}\n'
             'Status: ${booking.status.toUpperCase()}'),
         trailing: Icon(Icons.circle, size: 14, color: _statusColor),
         onTap: () => showModalBottomSheet(
@@ -315,7 +322,7 @@ class _BookingDetail extends StatelessWidget {
             Text('${booking.customerName} · ${booking.serviceName}',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
-            Text('${booking.date} at ${booking.time}'),
+            Text('${booking.date} — ${booking.sessionLabel}'),
             if (booking.customerEmail != null) Text(booking.customerEmail!),
             if (booking.customerPhone != null) Text(booking.customerPhone!),
             const SizedBox(height: 24),

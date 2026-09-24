@@ -17,6 +17,10 @@ export function fmtTime(b) {
   });
 }
 
+export function fmtSession(b) {
+  return b.session === "morning" ? "Morning" : b.session === "afternoon" ? "Afternoon" : fmtTime(b);
+}
+
 export function fmtPrice(p) {
   return p == null || p === 0 ? "Free" : `₱${Number(p).toLocaleString("en-PH")}`;
 }
@@ -69,7 +73,7 @@ export default function Dashboard({ navigate }) {
         {showDate ? (
           <>
             <span className="booking-date">{fmtDate(b)}</span>
-            <span className="booking-time">{fmtTime(b)}</span>
+            <span className="booking-session">{fmtSession(b)}</span>
           </>
         ) : (
           <span className="booking-date">{fmtDate(b)}</span>

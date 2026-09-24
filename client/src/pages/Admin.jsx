@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, storage } from "../api.js";
-import { fmtDate, fmtTime, fmtPrice } from "./Dashboard.jsx";
+import { fmtDate, fmtSession, fmtPrice } from "./Dashboard.jsx";
 
 export default function Admin({ navigate }) {
   const [tab, setTab] = useState("bookings");
@@ -11,6 +11,8 @@ export default function Admin({ navigate }) {
   const [editing, setEditing] = useState(null);
   const [confirming, setConfirming] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [hours, setHours] = useState(null);
+  const [saved, setSaved] = useState(false);
 
   const auth = storage.token ? { token: storage.token } : {};
 
@@ -85,6 +87,32 @@ export default function Admin({ navigate }) {
     }
   }
 
+  function loadHours() {
+    return api("/api/admin/settings", auth).then((s) =>
+      setHours({
+        morning_start: s.morning_start.slice(0, 5),
+        morning_end: s.morning_end.slice(0, 5),
+        afternoon_start: s.afternoon_start.slice(0, 5),
+        afternoon_end: s.afternoon_end.slice(0, 5),
+      })
+    );
+  }
+
+  async function saveHours(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    setSaved(false);
+    try {
+      await api("/api/admin/settings", { method: "PUT", ...auth, body: hours });
+      setSaved(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (error && bookings === null) {
     return (
       <div>
@@ -119,6 +147,11 @@ export default function Admin({ navigate }) {
     .filter((b) => b.status === "confirmed")
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+  const d = new Date();
+  const todayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const todayBookings = confirmedBookings.filter((b) => b.date === todayKey);
+  const otherBookings = confirmedBookings.filter((b) => b.date !== todayKey);
+
   async function confirmBooking() {
     if (!confirming) return;
     setBusy(true);
@@ -135,10 +168,10 @@ export default function Admin({ navigate }) {
   }
 
   const bookingRow = (b) => (
-    <li key={b.id} className={`booking-row status-${b.status}`}>
+    <li key={b.id} className={`booking-row status-${b.status}${b.date === todayKey ? " today" : ""}`}>
       <div className="booking-when">
         <span className="booking-date">{fmtDate(b)}</span>
-        <span className="booking-time">{fmtTime(b)}</span>
+        <span className="booking-session">{fmtSession(b)}</span>
       </div>
       <div className="booking-what">
         <strong>{b.customer_name}</strong>
@@ -205,6 +238,13 @@ export default function Admin({ navigate }) {
         >
           Schedule
         </button>
+        <button
+          className={tab === "hours" ? "active" : ""}
+          aria-pressed={tab === "hours"}
+          onClick={() => { setTab("hours"); if (hours === null) loadHours(); }}
+        >
+          Hours
+        </button>
       </div>
 
       {tab === "bookings" && (
@@ -256,7 +296,20 @@ export default function Admin({ navigate }) {
           {confirmedBookings.length === 0 ? (
             <p className="muted">No confirmed bookings yet — confirm one from the Bookings tab.</p>
           ) : (
-            <ul className="booking-list">{confirmedBookings.map(bookingRow)}</ul>
+            <>
+              {todayBookings.length > 0 && (
+                <div className="schedule-today">
+                  <h3 className="schedule-today-title">Today</h3>
+                  <ul className="booking-list">{todayBookings.map(bookingRow)}</ul>
+                </div>
+              )}
+              {otherBookings.length > 0 && (
+                <div className={todayBookings.length ? "schedule-other" : ""}>
+                  <h3 className="schedule-other-title">Other days</h3>
+                  <ul className="booking-list">{otherBookings.map(bookingRow)}</ul>
+                </div>
+              )}
+            </>
           )}
         </section>
       )}
@@ -349,6 +402,72 @@ export default function Admin({ navigate }) {
             )}
           </section>
         </>
+      )}
+
+      {tab === "hours" && (
+        <section className="card">
+          <div className="section-head">
+            <h2>Opening hours</h2>
+            <p className="muted">
+              Two fixed sessions per day. Clients book either the morning or
+              the afternoon session you define here.
+            </p>
+          </div>
+          {hours === null ? (
+            <p className="muted">Loading…</p>
+          ) : (
+            <form onSubmit={saveHours} noValidate>
+              <fieldset>
+                <legend><strong>Morning</strong></legend>
+                <div className="form-row">
+                  <label>
+                    Opens
+                    <input
+                      type="time"
+                      value={hours.morning_start}
+                      onChange={(e) => setHours({ ...hours, morning_start: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Closes
+                    <input
+                      type="time"
+                      value={hours.morning_end}
+                      onChange={(e) => setHours({ ...hours, morning_end: e.target.value })}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend><strong>Afternoon</strong></legend>
+                <div className="form-row">
+                  <label>
+                    Opens
+                    <input
+                      type="time"
+                      value={hours.afternoon_start}
+                      onChange={(e) => setHours({ ...hours, afternoon_start: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Closes
+                    <input
+                      type="time"
+                      value={hours.afternoon_end}
+                      onChange={(e) => setHours({ ...hours, afternoon_end: e.target.value })}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+              <div className="actions">
+                <button className="primary" type="submit" disabled={busy}>
+                  Save hours
+                </button>
+                {saved && <span className="muted">Saved ✓</span>}
+              </div>
+            </form>
+          )}
+        </section>
       )}
     </div>
   );

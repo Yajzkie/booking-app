@@ -6,6 +6,9 @@
   --accent: #0a84ff;
   --border: #e2e2e6;
   --radius: 12px;
+  --danger: #f5365c;
+  --warn: #e0a400;
+  --ok: #30d158;
 }
 
 * {
@@ -711,7 +714,7 @@ button:disabled {
   font-weight: 600;
 }
 
-.booking-time {
+.booking-session {
   font-size: 0.75rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
@@ -745,6 +748,59 @@ button:disabled {
 .status-cancelled .status { background: #e6e6e8; color: #555; }
 
 /* ---- Admin ---- */
+
+.schedule-today {
+  background: linear-gradient(180deg, rgba(10, 132, 255, 0.06), rgba(10, 132, 255, 0.02));
+  border: 1px solid rgba(10, 132, 255, 0.25);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.schedule-today-title {
+  margin: 0 0 0.6rem;
+  color: var(--accent);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.schedule-today .booking-row {
+  padding: 1.15rem 1.25rem;
+}
+
+.schedule-today .booking-when {
+  min-width: 110px;
+  padding: 0.6rem 0.75rem;
+}
+
+.schedule-today .booking-date {
+  font-size: 1rem;
+}
+
+.schedule-today .booking-session {
+  font-size: 0.9rem;
+}
+
+.schedule-today .booking-what strong {
+  font-size: 1.15rem;
+}
+
+.schedule-today .status {
+  font-size: 0.76rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.schedule-other {
+  margin-top: 1rem;
+}
+
+.schedule-other-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
 .row-actions {
   display: flex;
@@ -798,4 +854,191 @@ button.danger:hover:not(:disabled) {
     flex-wrap: wrap;
     justify-content: flex-end;
   }
+}
+
+.slot-groups {
+  border: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 1rem;
+}
+
+fieldset fieldset {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+}
+
+fieldset fieldset legend {
+  padding: 0 0.4rem;
+  font-size: 0.85rem;
+}
+
+.slot-groups legend {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.slot-chip {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.slot-chip .slot-chip-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.slot-chip.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.slot-chip.selected .slot-chip-time {
+  opacity: 0.85;
+}
+
+.cal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.cal-head button {
+  padding: 0.3rem 0.8rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.cal-title {
+  font-size: 1rem;
+}
+
+.cal-weekdays,
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.cal-weekdays {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.cal-grid {
+  margin-top: 0.25rem;
+}
+
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.4rem 0.1rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+
+.cal-day-num {
+  line-height: 1;
+}
+
+.cal-day-sessions {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.cal-sess {
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.15rem 0.2rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.35);
+  opacity: 0.85;
+}
+
+.cal-sess.taken {
+  background: transparent;
+  color: var(--muted);
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.cal-day.past {
+  opacity: 0.4;
+}
+
+.cal-day.full {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(245, 54, 92, 0.08);
+  font-weight: 600;
+}
+
+.cal-day.partial {
+  color: var(--warn);
+  border-color: var(--warn);
+  background: rgba(255, 204, 0, 0.14);
+}
+
+.cal-day.open {
+  color: var(--ok);
+  border-color: var(--ok);
+  background: rgba(48, 209, 88, 0.1);
+}
+
+.cal-day.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cal-legend {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cal-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
+
+.cal-dot.full {
+  background: var(--danger);
+}
+
+.cal-dot.partial {
+  background: var(--warn);
+}
+
+.cal-dot.open {
+  background: var(--ok);
+}
+
+.cal-dot.plain {
+  border: 1px solid var(--border);
 }

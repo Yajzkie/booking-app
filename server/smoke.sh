@@ -47,7 +47,7 @@ fi
 echo "== book while logged in =="
 curl -s --max-time 5 -X POST -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d "{\"service_id\":1,\"date\":\"2026-09-30\",\"time\":\"10:00\",\"name\":\"Demo User\",\"email\":\"$EMAIL\"}" \
+  -d "{\"service_id\":1,\"date\":\"2026-09-30\",\"session\":\"morning\",\"name\":\"Demo User\",\"email\":\"$EMAIL\"}" \
   http://localhost:3001/api/bookings; echo
 
 echo "== my bookings =="

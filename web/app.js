@@ -65,8 +65,8 @@ function selectService(service, card) {
 function validateStep(step) {
   if (step === "time") {
     $("booking-date").min = new Date().toISOString().split("T")[0];
-    if (!$("booking-date").value || !$("booking-time").value) {
-      showError("Please pick a date and time.");
+    if (!$("booking-date").value || !document.querySelector('input[name="session"]:checked')) {
+      showError("Please pick a date and a session.");
       return false;
     }
   }
@@ -82,10 +82,12 @@ async function submitBooking() {
   if (!selectedService) return showError("Please choose a service first.");
   if (!validateStep("time") || !validateStep("details")) return;
 
+  const session = document.querySelector('input[name="session"]:checked').value;
+
   const { data, error } = await sb.rpc("create_booking", {
     p_service_id: selectedService.id,
     p_date: $("booking-date").value,
-    p_time: $("booking-time").value,
+    p_session: session,
     p_name: $("customer-name").value.trim(),
     p_email: $("customer-email").value.trim() || null,
     p_phone: $("customer-phone").value.trim() || null,
@@ -95,9 +97,11 @@ async function submitBooking() {
 
   $("booking-id").textContent = data;
   $("confirm-service").textContent = selectedService.name;
-  $("confirm-time").textContent = new Date(
-    `${$("booking-date").value}T${$("booking-time").value}`
-  ).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  $("confirm-time").textContent =
+    `${session[0].toUpperCase() + session.slice(1)} — ` +
+    new Date(`${$("booking-date").value}T00:00`).toLocaleDateString(undefined, {
+      dateStyle: "medium",
+    });
 
   steps.forEach((s) => $(`step-${s}`).classList.add("hidden"));
   $("actions").classList.add("hidden");
@@ -109,7 +113,7 @@ function resetForm() {
   selectedService = null;
   ["name", "email", "phone"].forEach((f) => ($(`customer-${f}`).value = ""));
   $("booking-date").value = "";
-  $("booking-time").value = "";
+  document.querySelectorAll('input[name="session"]').forEach((r) => (r.checked = false));
   document.querySelectorAll(".service-card").forEach((c) => c.classList.remove("selected"));
   $("confirmation").classList.add("hidden");
   $("actions").classList.remove("hidden");
