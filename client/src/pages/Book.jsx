@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, storage } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import { fmtPrice, fmtSession } from "./Dashboard.jsx";
@@ -23,9 +23,17 @@ export default function Book({ navigate }) {
   const { user } = useAuth();
   const [services, setServices] = useState([]);
   const [step, setStep] = useState(0);
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (!d) return;
+    const onClose = () => navigate("/dashboard");
+    d.addEventListener("close", onClose);
+    return () => d.removeEventListener("close", onClose);
+  }, [navigate]);
   const [service, setService] = useState(null);
   const [form, setForm] = useState({ date: "", session: "", name: user?.name?.trim() ?? user?.email?.split("@")[0] ?? "", email: user?.email ?? "", phone: "" });
-  const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [monthCursor, setMonthCursor] = useState(() => {
     const d = new Date();
@@ -95,7 +103,7 @@ export default function Book({ navigate }) {
     setError("");
     const token = storage.token;
     try {
-      const { id } = await api("/api/bookings", {
+      await api("/api/bookings", {
         method: "POST",
         token,
         body: {
@@ -107,36 +115,10 @@ export default function Book({ navigate }) {
           phone: form.phone.trim() || null,
         },
       });
-      setResult({ id, ...form });
+      dialogRef.current?.showModal();
     } catch (e) {
       setError(e.message);
     }
-  }
-
-  if (result) {
-    return (
-      <div className="card">
-        <h2>Booking received!</h2>
-        <p>
-          Reference <strong>#{result.id}</strong> — {service.name},{" "}
-          {SESSION_LABEL[result.session]} on{" "}
-          {new Date(`${result.date}T00:00`).toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-          .
-        </p>
-        <p className="muted">
-          {user
-            ? "You can track its status from your dashboard."
-            : form.email
-              ? `We'll confirm it to ${form.email}.`
-              : "We'll confirm your session shortly."}
-        </p>
-        <button onClick={() => location.reload()}>Book another</button>
-      </div>
-    );
   }
 
   const today = ymd(new Date());
@@ -185,7 +167,7 @@ export default function Book({ navigate }) {
 
   return (
     <div>
-      <h1>Book a visit</h1>
+      <h1>Book a service</h1>
 
       <div
         className="stepper"
@@ -368,6 +350,23 @@ export default function Book({ navigate }) {
           </button>
         )}
       </div>
+
+      <dialog ref={dialogRef} className="success-dialog">
+        <form method="dialog">
+          <span className="success-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </span>
+          <h2>Booking successful!</h2>
+          <p className="muted">
+            Your booking is confirmed — track it from your dashboard.
+          </p>
+          <button className="primary" value="close">
+            Go to dashboard
+          </button>
+        </form>
+      </dialog>
     </div>
   );
 }

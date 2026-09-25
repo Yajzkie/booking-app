@@ -38,6 +38,7 @@ async function loadServices() {
   const { data, error } = await sb
     .from("services")
     .select("*")
+    .eq("active", true)
     .order("name");
   if (error) return showError(error.message);
 

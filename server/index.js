@@ -161,7 +161,7 @@ app.get("/api/auth/me", async (req, res) => {
 // ---------- services ----------
 app.get("/api/services", async (_req, res, next) => {
   try {
-    const { data, error } = await anon.from("services").select("*").order("name");
+    const { data, error } = await anon.from("services").select("*").eq("active", true).order("name");
     if (error) throw error;
     res.json(data);
   } catch (e) {
@@ -329,6 +329,7 @@ app.get("/api/admin/services", async (req, res, next) => {
     const { data, error } = await clientFor(req)
       .from("services")
       .select("*")
+      .eq("active", true)
       .order("name");
     if (error) throw error;
     res.json(data);
@@ -377,15 +378,10 @@ app.delete("/api/admin/services/:id", async (req, res, next) => {
     if (!(await requireOwner(req, res))) return;
     const { data, error } = await clientFor(req)
       .from("services")
-      .delete()
+      .update({ active: false })
       .eq("id", req.params.id)
       .select("id");
-    if (error) {
-      if (error.code === "23503") {
-        return res.status(409).json({ error: "Can't delete — bookings reference this service." });
-      }
-      throw error;
-    }
+    if (error) throw error;
     if (!data.length) return res.status(404).json({ error: "Service not found" });
     res.json({ ok: true });
   } catch (e) {

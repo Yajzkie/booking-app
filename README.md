@@ -20,6 +20,8 @@ owner_app/                     Flutter admin app
 2. Open **SQL Editor** and run `supabase/schema.sql` (fresh) — or for this
    existing project, run `supabase/client-accounts.sql`. Then run
    `supabase/sessions.sql` (morning/afternoon sessions + double-booking guard).
+   Then run `supabase/archive-services.sql` so deleting a service archives it
+   instead of failing on bookings that reference it.
    **Edit the owner email in step 8 first** — it promotes your account.
 3. Create the owner account (email + password) in **Authentication → Users**.
 4. Note the URL + anon key under **Project Settings → API**.

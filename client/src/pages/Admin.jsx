@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, storage } from "../api.js";
 import { fmtDate, fmtSession, fmtPrice } from "./Dashboard.jsx";
 
@@ -13,6 +13,8 @@ export default function Admin({ navigate }) {
   const [busy, setBusy] = useState(false);
   const [hours, setHours] = useState(null);
   const [saved, setSaved] = useState(false);
+  const detailsDialog = useRef(null);
+  const [details, setDetails] = useState(null);
 
   const auth = storage.token ? { token: storage.token } : {};
 
@@ -177,9 +179,7 @@ export default function Admin({ navigate }) {
         <strong>{b.customer_name}</strong>
         <span className="muted">
           {b.services?.name} · {b.services?.duration_minutes} min
-          {b.customer_email && ` · ${b.customer_email}`}
           {b.customer_phone && ` · ${b.customer_phone}`}
-          &nbsp;· Ref #{b.id}
         </span>
       </div>
       <span className="status">{b.status}</span>
@@ -195,6 +195,27 @@ export default function Admin({ navigate }) {
       )}
     </li>
   );
+
+  const scheduleRow = (b) => {
+    const open = () => {
+      setDetails(b);
+      detailsDialog.current?.showModal();
+    };
+    return (
+<li key={b.id} className={`booking-row schedule-row status-${b.status}${b.date === todayKey ? " today" : ""}`}>
+        <div className="booking-when">
+          <span className="booking-date">{fmtDate(b)}</span>
+          <span className="booking-session">{fmtSession(b)}</span>
+        </div>
+        <span className="status">{b.status}</span>
+        <div className="row-actions">
+          <button className="summary-edit" onClick={open}>
+            Details
+          </button>
+        </div>
+      </li>
+    );
+  };
 
   const setField = (key) => (e) => setEditing({ ...editing, [key]: e.target.value });
 
@@ -246,6 +267,54 @@ export default function Admin({ navigate }) {
           Hours
         </button>
       </div>
+
+      <dialog ref={detailsDialog} className="booking-dialog">
+        {details && (
+          <form method="dialog">
+            <h2>Booking details</h2>
+            <dl className="detail-list">
+              <div>
+                <dt>Service</dt>
+                <dd>
+                  {details.services?.name} · {details.services?.duration_minutes} min ·{" "}
+                  {fmtPrice(details.services?.price)}
+                </dd>
+              </div>
+              <div>
+                <dt>When</dt>
+                <dd>
+                  {fmtDate(details)} · {fmtSession(details)}
+                </dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{details.status}</dd>
+              </div>
+              <div>
+                <dt>Client</dt>
+                <dd>
+                  {details.customer_name}
+                  {details.customer_phone && <> · {details.customer_phone}</>}
+                  {details.customer_email && <> · {details.customer_email}</>}
+                </dd>
+              </div>
+              <div>
+                <dt>Reference</dt>
+                <dd>#{details.id}</dd>
+              </div>
+              <div>
+                <dt>Booked</dt>
+                <dd>{new Date(details.created_at).toLocaleString()}</dd>
+              </div>
+            </dl>
+            <div className="actions">
+              <button className="primary" value="close">
+                Close
+              </button>
+            </div>
+          </form>
+        )}
+      </dialog>
 
       {tab === "bookings" && (
         <>
@@ -300,13 +369,13 @@ export default function Admin({ navigate }) {
               {todayBookings.length > 0 && (
                 <div className="schedule-today">
                   <h3 className="schedule-today-title">Today</h3>
-                  <ul className="booking-list">{todayBookings.map(bookingRow)}</ul>
+                  <ul className="booking-list">{todayBookings.map(scheduleRow)}</ul>
                 </div>
               )}
               {otherBookings.length > 0 && (
                 <div className={todayBookings.length ? "schedule-other" : ""}>
                   <h3 className="schedule-other-title">Other days</h3>
-                  <ul className="booking-list">{otherBookings.map(bookingRow)}</ul>
+                  <ul className="booking-list">{otherBookings.map(scheduleRow)}</ul>
                 </div>
               )}
             </>
@@ -380,7 +449,7 @@ export default function Admin({ navigate }) {
             ) : (
               <ul className="booking-list">
                 {services.map((s) => (
-                  <li key={s.id} className="service-card">
+                  <li key={s.id} className="service-card service-card-admin">
                     <div>
                       <strong>{s.name}</strong>
                       {s.description && <div className="muted">{s.description}</div>}
@@ -388,11 +457,28 @@ export default function Admin({ navigate }) {
                     <div className="service-side">
                       <span className="price">{fmtPrice(s.price)} · {s.duration_minutes} min</span>
                       <div className="row-actions">
-                        <button onClick={() => setEditing({ ...s, price: String(s.price), duration_minutes: String(s.duration_minutes) })}>
-                          Edit
+                        <button
+                          className="icon-btn"
+                          aria-label={`Edit ${s.name}`}
+                          onClick={() => setEditing({ ...s, price: String(s.price), duration_minutes: String(s.duration_minutes) })}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                          </svg>
                         </button>
-                        <button className="danger" disabled={busy} onClick={() => removeService(s)}>
-                          Delete
+                        <button
+                          className="danger icon-btn"
+                          aria-label={`Delete ${s.name}`}
+                          disabled={busy}
+                          onClick={() => removeService(s)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
                         </button>
                       </div>
                     </div>

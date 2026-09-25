@@ -82,7 +82,7 @@ export default function Dashboard({ navigate }) {
       <div className="booking-what">
         <strong>{b.services?.name}</strong>
         <span className="muted">
-          {b.services?.duration_minutes} min · Ref #{b.id}
+          {b.services?.duration_minutes} min
         </span>
       </div>
       <span className="status">{b.status}</span>
@@ -119,7 +119,7 @@ export default function Dashboard({ navigate }) {
       <section className="card">
         <div className="section-head">
           <h2>Upcoming</h2>
-          <button onClick={() => navigate("/")}>Book a visit</button>
+          <button onClick={() => navigate("/")}>Book a service</button>
         </div>
         {upcoming.length === 0 ? (
           <p className="muted">No visits scheduled yet.</p>

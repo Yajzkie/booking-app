@@ -382,7 +382,7 @@ class _ServicesTabState extends State<ServicesTab> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final res = await db.from('services').select('*').order('name');
+      final res = await db.from('services').select('*').eq('active', true).order('name');
       setState(() {
         _loading = false;
         _error = null;
@@ -414,7 +414,7 @@ class _ServicesTabState extends State<ServicesTab> {
   }
 
   Future<void> _deleteService(int id) async {
-    await db.from('services').delete().eq('id', id);
+    await db.from('services').update({'active': false}).eq('id', id);
     await _load();
   }
 

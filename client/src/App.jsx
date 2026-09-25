@@ -36,7 +36,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="brand-dot" aria-hidden="true" />
-          Book a Service
+          JWorkz Shop
         </div>
 
         <nav className="sidebar-nav" aria-label="Main">
@@ -45,7 +45,7 @@ export default function App() {
           ) : (
             <>
               {navItem("/dashboard", "Dashboard")}
-              {navItem("/", "Book a visit")}
+              {navItem("/", "Book a service")}
             </>
           )}
         </nav>
